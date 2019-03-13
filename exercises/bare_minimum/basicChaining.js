@@ -10,11 +10,42 @@
 
 var fs = require('fs');
 var Promise = require('bluebird');
+var pluckFirstLineFromFileAsync = require('./promiseConstructor.js').pluckFirstLineFromFileAsync;
+var getGitHubProfileAsync = require('./promisification.js').getGitHubProfileAsync;
+fsPromisified = Promise.promisifyAll(fs);
 
+//1
+//fs.readFile(readFilePath,ut8)
+//pluckFirstLineFromFileAsync(filePath);
+//2
+//getGitHubProfileAsync
+//3
+// fs.writeFile(writeFilePath)
 
+var fetchProfileAndWriteToFile = function (readFilePath, writeFilePath) {
 
-var fetchProfileAndWriteToFile = function(readFilePath, writeFilePath) {
-  // TODO
+  return fsPromisified.readFileAsync(readFilePath, 'utf8')
+    .then(function (file) {
+      if (!file) {
+        throw new Error('no file exists!!!!!!!');
+      } else {
+        return readFilePath;
+      }
+    })
+    .then(function (filePath) {
+      return pluckFirstLineFromFileAsync(filePath);
+    })
+    .then(function (profileName) {
+      return getGitHubProfileAsync(profileName);
+    })
+    .then(function (profileInformation) {
+      console.log('this is profile info', profileInformation);
+      return fsPromisified.writeFileAsync(writeFilePath, JSON.stringify(profileInformation));
+    })
+    .catch(function (err) {
+      console.log('Oops, caught an error: ', err.message);
+    });
+
 };
 
 // Export these functions so we can test them
